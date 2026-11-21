@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Expense Tracker</title>
+<style>
+body{font-family:system-ui;max-width:720px;margin:30px auto;padding:0 16px;background:#f8fafc;color:#0f172a}
+.cards{display:flex;gap:10px}.card{flex:1;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px}
+.card b{display:block;font-size:22px}.inc{color:#16a34a}.exp{color:#dc2626}
+form{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;margin:16px 0}
+input,select{padding:9px;border:1px solid #cbd5e1;border-radius:8px}
+button{padding:9px 14px;border:0;border-radius:8px;background:#0f172a;color:#fff;cursor:pointer}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden}
+td,th{padding:9px 12px;border-bottom:1px solid #e2e8f0;text-align:left}
+.bar{height:10px;border-radius:5px;background:#3b82f6}
+.del{background:none;color:#94a3b8;padding:2px 6px}
+</style></head><body>
+<h1>Expense Tracker</h1>
+<div class="cards"><div class="card">Income<b class="inc" id="i">0</b></div><div class="card">Expenses<b class="exp" id="e">0</b></div><div class="card">Balance<b id="bal">0</b></div></div>
+<form id="f">
+<input id="t" placeholder="Description" required>
+<input id="a" type="number" step="0.01" min="0" placeholder="Amount" required>
+<select id="k"><option value="expense">Expense</option><option value="income">Income</option></select>
+<button>Add</button></form>
+<h3>By description (expenses)</h3><div id="chart"></div>
+<h3>Transactions</h3>
+<table><tbody id="tb"></tbody></table>
+<script>
+let tx=JSON.parse(localStorage.tx||'[]');
+const fmt=n=>n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+function save(){localStorage.tx=JSON.stringify(tx);render()}
+function render(){
+  const inc=tx.filter(t=>t.k=='income').reduce((s,t)=>s+t.a,0),exp=tx.filter(t=>t.k=='expense').reduce((s,t)=>s+t.a,0);
+  i.textContent=fmt(inc);e.textContent=fmt(exp);bal.textContent=fmt(inc-exp);
+  tb.innerHTML=tx.map((t,j)=>`<tr><td>${t.t.replace(/</g,'&lt;')}</td><td class="${t.k=='income'?'inc':'exp'}">${t.k=='income'?'+':'-'}${fmt(t.a)}</td><td><button class="del" onclick="tx.splice(${j},1);save()">✕</button></td></tr>`).join('');
+  const g={};tx.filter(t=>t.k=='expense').forEach(t=>g[t.t]=(g[t.t]||0)+t.a);
+  const max=Math.max(1,...Object.values(g));
+  chart.innerHTML=Object.entries(g).sort((a,b)=>b[1]-a[1]).map(([n,v])=>`<div style="margin:6px 0">${n.replace(/</g,'&lt;')} — ${fmt(v)}<div class="bar" style="width:${v/max*100}%"></div></div>`).join('')||'<small>No expenses yet</small>'}
+f.onsubmit=ev=>{ev.preventDefault();tx.unshift({t:t.value.trim(),a:+a.value,k:k.value});f.reset();save()};
+render();
+</script></body></html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kanban</title>
+<style>
+body{font-family:system-ui;margin:0;padding:24px;background:#eef2f7;color:#0f172a}
+.board{display:flex;gap:14px;align-items:flex-start}
+.col{flex:1;background:#e2e8f0;border-radius:10px;padding:10px;min-height:200px}
+.col.over{background:#cbd5e1}
+.col h3{margin:4px 6px 10px}
+.card{background:#fff;border-radius:8px;padding:10px;margin:8px 0;box-shadow:0 1px 2px rgba(0,0,0,.1);cursor:grab;display:flex;justify-content:space-between;gap:6px}
+.card.drag{opacity:.4}
+.x{border:0;background:none;color:#94a3b8;cursor:pointer}
+form{display:flex;gap:6px;margin-top:8px}input{flex:1;padding:7px;border:1px solid #cbd5e1;border-radius:6px}
+button.add{border:0;background:#0f172a;color:#fff;border-radius:6px;padding:7px 10px;cursor:pointer}
+</style></head><body>
+<h1>Kanban Board</h1><div class="board" id="board"></div>
+<script>
+const cols=['To do','Doing','Done'];
+let data=JSON.parse(localStorage.kanban||'null')||{'To do':['Try dragging me'],'Doing':[],'Done':[]};
+let drag=null;
+const save=()=>{localStorage.kanban=JSON.stringify(data);render()};
+function render(){
+  board.innerHTML='';
+  cols.forEach(c=>{
+    const el=document.createElement('div');el.className='col';
+    el.innerHTML=`<h3>${c} (${data[c].length})</h3>`;
+    el.ondragover=e=>{e.preventDefault();el.classList.add('over')};
+    el.ondragleave=()=>el.classList.remove('over');
+    el.ondrop=()=>{if(drag){const [fc,fi]=drag;const [t]=data[fc].splice(fi,1);data[c].push(t);drag=null;save()}};
+    data[c].forEach((t,i)=>{
+      const cd=document.createElement('div');cd.className='card';cd.draggable=true;
+      cd.innerHTML=`<span></span><button class="x">✕</button>`;cd.firstChild.textContent=t;
+      cd.ondragstart=()=>{drag=[c,i];cd.classList.add('drag')};
+      cd.querySelector('.x').onclick=()=>{data[c].splice(i,1);save()};
+      el.appendChild(cd)});
+    const f=document.createElement('form');
+    f.innerHTML='<input placeholder="Add card" required><button class="add">+</button>';
+    f.onsubmit=e=>{e.preventDefault();const v=f.firstChild.value.trim();if(v){data[c].push(v);save()}};
+    el.appendChild(f);board.appendChild(el)})}
+render();
+</script></body></html>
